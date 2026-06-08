@@ -98,6 +98,21 @@ function formatDateTime(value?: string | null) {
   return date.toLocaleString("en-IN");
 }
 
+function formatMonth(value?: string | null) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+}
+
+function formatDays(value?: number | string | null) {
+  if (value == null || value === "") return "-";
+  const amount = Number(value);
+  if (Number.isNaN(amount)) return String(value);
+  const formatted = amount.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  return `${formatted} ${amount === 1 ? "day" : "days"}`;
+}
+
 function money(value?: number | string | null) {
   const amount = Number(value || 0);
   return amount.toLocaleString("en-IN", {
@@ -148,7 +163,7 @@ export default function HrPage() {
   const [payrollLines, setPayrollLines] = useState<PayrollLine[]>([]);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
-  const [employeeStatusFilter, setEmployeeStatusFilter] = useState("");
+  const [employeeStatusFilter, setEmployeeStatusFilter] = useState("ACTIVE");
   const [leaveStatusFilter, setLeaveStatusFilter] = useState("");
   const [actionStatusFilter, setActionStatusFilter] = useState("");
   const [auditTableFilter, setAuditTableFilter] = useState("");
@@ -819,6 +834,10 @@ export default function HrPage() {
   function renderEmployeeDetailModal() {
     if (!employeeDetail) return null;
     const bank = employeeDetail.bank_account;
+    const leaveBalances = employeeDetail.leave_balances || [];
+    const leaveSummaries = [...(employeeDetail.leave_monthly_summaries || [])].sort((a, b) =>
+      String(a.period_start).localeCompare(String(b.period_start))
+    );
 
     return (
       <div className="modal-backdrop">
@@ -863,6 +882,61 @@ export default function HrPage() {
                   <span>Phone</span>
                   <strong><Phone size={14} /> {employeeDetail.phone || "-"}</strong>
                 </div>
+              </div>
+            </section>
+
+            <section className="detail-section">
+              <div className="detail-heading">
+                <CalendarDays size={17} />
+                <h3>Leave</h3>
+              </div>
+              {leaveBalances.length ? (
+                <div className="leave-balance-grid">
+                  {leaveBalances.map((balance) => (
+                    <div className="leave-balance-card" key={balance.id}>
+                      <span>{pretty(balance.leave_type)}</span>
+                      <strong>{formatDays(balance.current_balance_days)}</strong>
+                      <div className="small muted">
+                        Base {formatDays(balance.base_balance_days)} from {formatMonth(balance.balance_period_start)}
+                      </div>
+                      <div className="small muted">
+                        +{formatDays(balance.monthly_accrual_days)} monthly
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="compact-row muted">No leave balance recorded.</div>
+              )}
+              <div className="table-wrap detail-table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Month</th>
+                      <th>Type</th>
+                      <th>Availed</th>
+                      <th>Status</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaveSummaries.length ? leaveSummaries.map((item) => (
+                      <tr key={item.id}>
+                        <td>{formatMonth(item.period_start)}</td>
+                        <td>{pretty(item.leave_type)}</td>
+                        <td>{formatDays(item.total_days)}</td>
+                        <td>
+                          <span className={`status-pill ${item.count_status === "RECORDED" ? "good" : item.count_status === "PENDING_COUNT" ? "warn" : ""}`}>
+                            {pretty(item.count_status)}
+                          </span>
+                        </td>
+                        <td>{item.raw_leave_note || "-"}</td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan={5}>No month-wise leave history recorded.</td></tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </section>
 

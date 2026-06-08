@@ -43,8 +43,33 @@ export type EmployeeBankAccount = {
   updated_at?: string | null;
 };
 
+export type LeaveMonthlySummary = {
+  id: string;
+  period_start: string;
+  period_end: string;
+  leave_type: string;
+  total_days?: number | string | null;
+  count_status: string;
+  raw_leave_note?: string | null;
+};
+
+export type LeaveBalance = {
+  id: string;
+  leave_type: string;
+  effective_year: number;
+  balance_period_start: string;
+  base_balance_days: number | string;
+  monthly_accrual_days: number | string;
+  months_accrued_since_period_start: number | string;
+  current_balance_days: number | string;
+  used_days: number | string;
+  pending_days: number | string;
+};
+
 export type EmployeeDetail = Employee & {
   bank_account?: EmployeeBankAccount | null;
+  leave_monthly_summaries?: LeaveMonthlySummary[];
+  leave_balances?: LeaveBalance[];
 };
 
 export type LeaveRequest = {

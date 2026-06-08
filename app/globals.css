@@ -532,6 +532,43 @@ tr:last-child td {
   gap: 10px;
 }
 
+.leave-balance-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.leave-balance-card {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #ffffff;
+  padding: 10px;
+}
+
+.leave-balance-card > span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.leave-balance-card strong {
+  color: var(--ink);
+  font-size: 1.35rem;
+}
+
+.detail-table-wrap {
+  background: #ffffff;
+}
+
+.detail-table-wrap table {
+  min-width: 680px;
+}
+
 .detail-item {
   display: grid;
   gap: 4px;
@@ -622,6 +659,7 @@ tr:last-child td {
   }
 
   .detail-grid,
+  .leave-balance-grid,
   .form-grid {
     grid-template-columns: 1fr;
   }
