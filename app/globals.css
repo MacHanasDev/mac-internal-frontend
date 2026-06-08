@@ -323,6 +323,8 @@ textarea:focus {
   border-left-color: var(--green);
 }
 
+
+
 .metric-card:nth-child(3) {
   border-left-color: var(--blue);
 }
