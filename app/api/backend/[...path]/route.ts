@@ -6,10 +6,13 @@ type RouteContext = {
   params: Promise<{ path: string[] }>;
 };
 
+const LOCAL_BACKEND_API_URL = "http://localhost:8080/api/v1";
+const PRODUCTION_BACKEND_API_URL = "https://macproc-backend-final.fly.dev/api/v1";
+
 const BACKEND_API_URL =
   process.env.INTERNAL_BACKEND_API_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:8080/api/v1";
+  (process.env.VERCEL ? PRODUCTION_BACKEND_API_URL : LOCAL_BACKEND_API_URL);
 
 function backendUrl(path: string[]) {
   const base = BACKEND_API_URL.replace(/\/$/, "");
