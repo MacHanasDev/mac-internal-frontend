@@ -124,7 +124,7 @@ function normalizeRole(role?: string | null) {
 
 function canAccessFinance(user?: UserProfile | null) {
   const roles = [normalizeRole(user?.role), ...(user?.roles || []).map(normalizeRole)].filter(Boolean);
-  return roles.includes("SUPERADMIN");
+  return roles.includes("SUPERADMIN") || roles.includes("FIN_ACCOUNTS");
 }
 
 function pretty(value?: string | null) {
@@ -511,7 +511,7 @@ export default function FinancePage() {
       <InternalShell user={user} active="finance">
         <section className="panel">
           <h1>Financial access restricted</h1>
-          <p className="muted">This workspace requires SUPERADMIN.</p>
+          <p className="muted">This workspace requires SUPERADMIN or FIN_ACCOUNTS.</p>
         </section>
       </InternalShell>
     );

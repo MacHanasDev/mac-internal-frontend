@@ -3,7 +3,18 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, LockKeyhole } from "lucide-react";
-import { getProfile, getToken, login } from "@/lib/api";
+import { getProfile, getToken, login, type UserProfile } from "@/lib/api";
+
+function normalizeRole(role?: string | null) {
+  return String(role || "").toUpperCase().replace(/-/g, "_").trim();
+}
+
+function internalLandingPath(user: UserProfile) {
+  const roles = [normalizeRole(user.role), ...(user.roles || []).map(normalizeRole)].filter(Boolean);
+  if (roles.includes("FIN_ACCOUNTS")) return "/finance";
+  if (roles.includes("HR_ADMIN") || roles.includes("SUPERADMIN")) return "/hr";
+  return "/hr";
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,7 +26,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (!getToken()) return;
     getProfile()
-      .then(() => router.replace("/hr"))
+      .then((profile) => router.replace(internalLandingPath(profile)))
       .catch(() => undefined);
   }, [router]);
 
@@ -25,7 +36,8 @@ export default function LoginPage() {
     setError(null);
     try {
       await login(email, password);
-      router.replace("/hr");
+      const profile = await getProfile();
+      router.replace(internalLandingPath(profile));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
@@ -47,7 +59,7 @@ export default function LoginPage() {
 
           <h1>Sign in</h1>
           <p className="muted">
-            Use your MacProc credentials. HR data is available only to HR_ADMIN or SUPERADMIN roles.
+            Use your MacProc credentials. HR needs HR_ADMIN or SUPERADMIN; finance needs FIN_ACCOUNTS or SUPERADMIN.
           </p>
 
           {error ? <div className="banner error">{error}</div> : null}

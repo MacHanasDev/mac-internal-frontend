@@ -27,7 +27,7 @@ export default function InternalShell({ children, user, active }: InternalShellP
   const normalizeRole = (roleValue?: string | null) => String(roleValue || "").toUpperCase().replace(/-/g, "_").trim();
   const role = normalizeRole(user.role);
   const roles = [role, ...(user.roles || []).map(normalizeRole)].filter(Boolean);
-  const isSuperAdmin = roles.includes("SUPERADMIN");
+  const canUseFinance = roles.includes("SUPERADMIN") || roles.includes("FIN_ACCOUNTS");
 
   return (
     <div className="app-shell">
@@ -46,7 +46,7 @@ export default function InternalShell({ children, user, active }: InternalShellP
               <Users size={18} />
               <span>HR Workspace</span>
             </a>
-            {isSuperAdmin ? (
+            {canUseFinance ? (
               <a className={`nav-link ${active === "finance" ? "active" : ""}`} href="/finance">
                 <Landmark size={18} />
                 <span>Financial Cockpit</span>
