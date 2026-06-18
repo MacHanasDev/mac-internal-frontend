@@ -315,8 +315,27 @@ textarea:focus {
 }
 
 .metric-card {
+  width: 100%;
   padding: 14px;
   border-left: 4px solid var(--primary);
+  color: var(--ink);
+  text-align: left;
+}
+
+button.metric-card {
+  appearance: none;
+  cursor: pointer;
+}
+
+button.metric-card:hover {
+  border-color: #c9d2df;
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.12);
+  transform: translateY(-1px);
+}
+
+button.metric-card:focus-visible {
+  outline: 3px solid rgba(220, 95, 0, 0.22);
+  outline-offset: 2px;
 }
 
 .metric-card:nth-child(2) {
@@ -369,6 +388,19 @@ textarea:focus {
   border-radius: var(--radius);
 }
 
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
 table {
   width: 100%;
   min-width: 760px;
@@ -391,6 +423,17 @@ th {
   font-size: 0.76rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.table-check {
+  width: 44px;
+  text-align: center;
+}
+
+.table-check input {
+  width: 16px;
+  min-height: 16px;
+  cursor: pointer;
 }
 
 tr:last-child td {
@@ -595,6 +638,53 @@ tr:last-child td {
   overflow-wrap: anywhere;
 }
 
+.filter-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(140px, 1fr));
+  gap: 10px;
+  align-items: end;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.filter-panel label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  color: #344054;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.filter-panel input,
+.filter-panel select {
+  width: 100%;
+}
+
+.filter-checkbox {
+  min-height: 38px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px !important;
+  color: var(--ink) !important;
+  font-size: 0.9rem !important;
+}
+
+.filter-checkbox input {
+  width: 16px;
+  min-height: 16px;
+}
+
+.filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -617,6 +707,21 @@ tr:last-child td {
 .form-grid select,
 .form-grid textarea {
   width: 100%;
+}
+
+.form-grid .checkbox-row {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.form-grid .checkbox-row input {
+  width: 16px;
+  min-height: 16px;
 }
 
 .spin {
@@ -660,6 +765,7 @@ tr:last-child td {
 
   .detail-grid,
   .leave-balance-grid,
+  .filter-panel,
   .form-grid {
     grid-template-columns: 1fr;
   }

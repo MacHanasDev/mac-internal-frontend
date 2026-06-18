@@ -3,6 +3,9 @@ export type UserProfile = {
   full_name?: string | null;
   phone?: string | null;
   role?: string | null;
+  roles?: string[] | null;
+  app?: string | null;
+  allowed_apps?: string[] | null;
 };
 
 export type DashboardSummary = {
@@ -155,6 +158,177 @@ export type AuditEvent = {
   reason?: string | null;
 };
 
+export type FinanceSummary = {
+  total_inflow: number;
+  total_outflow: number;
+  net_cash_movement: number;
+  customer_receipts: number;
+  supplier_payments: number;
+  salary_cost: number;
+  operating_expenses: number;
+  tax_payments: number;
+  bank_charges: number;
+  interest_income: number;
+  investor_investments: number;
+  loan_disbursements: number;
+  loan_repayments: number;
+  loan_interest: number;
+  unclassified_inflow: number;
+  unclassified_outflow: number;
+  transaction_count: number;
+  needs_review_count: number;
+};
+
+export type FinanceMonthly = {
+  month: string;
+  total_inflow: number;
+  total_outflow: number;
+  net_cash_movement: number;
+  customer_receipts: number;
+  supplier_payments: number;
+  salary_cost: number;
+  operating_expenses: number;
+  investor_investments: number;
+  internal_transfer_inflow?: number;
+  internal_transfer_outflow?: number;
+  loan_disbursements: number;
+  loan_repayments: number;
+  loan_interest: number;
+  unclassified_total: number;
+};
+
+export type FinanceGroupTotal = {
+  cashflow_group: string;
+  direction: string;
+  transaction_count: number;
+  amount: number;
+};
+
+export type FinanceCounterpartyTotal = {
+  counterparty_type: string;
+  counterparty_name: string;
+  cashflow_group: string;
+  transaction_count: number;
+  amount: number;
+};
+
+export type FinanceProfitabilityPeriod = {
+  sort_order: number;
+  period_key: string;
+  period_label: string;
+  period_start: string;
+  period_end: string;
+  customer_payments: number;
+  goods_purchased: number;
+  operating_margin_amount: number;
+  operating_margin_pct?: number | null;
+  ebt_expenses: number;
+  earnings_before_tax_amount: number;
+  earnings_before_tax_pct?: number | null;
+};
+
+export type FinanceProfitability = {
+  fy_label: string;
+  period_start: string;
+  period_end: string;
+  quarters: FinanceProfitabilityPeriod[];
+  overall?: FinanceProfitabilityPeriod | null;
+};
+
+export type FinanceCategories = {
+  cashflow_groups: string[];
+  counterparty_types: string[];
+  pl_categories: string[];
+};
+
+export type FinanceDashboard = {
+  summary: FinanceSummary;
+  monthly: FinanceMonthly[];
+  profitability?: FinanceProfitability | null;
+  groups: FinanceGroupTotal[];
+  top_counterparties: FinanceCounterpartyTotal[];
+};
+
+export type FinanceTransaction = {
+  id: string;
+  transaction_date: string;
+  value_date?: string | null;
+  description: string;
+  reference_no?: string | null;
+  amount: number;
+  direction: "DR" | "CR";
+  signed_amount: number;
+  balance?: number | null;
+  cashflow_group: string;
+  pl_category: string;
+  pl_subcategory?: string | null;
+  counterparty_type: string;
+  counterparty_name?: string | null;
+  is_internal_transfer: boolean;
+  is_reviewed: boolean;
+  classification_confidence: number;
+  classification_source: string;
+  notes?: string | null;
+  bank_name?: string | null;
+  account_number_masked?: string | null;
+};
+
+export type FinanceImport = {
+  id: string;
+  file_name: string;
+  source_format: string;
+  statement_period_start?: string | null;
+  statement_period_end?: string | null;
+  rows_seen: number;
+  rows_imported: number;
+  rows_duplicate: number;
+  rows_error: number;
+  status: string;
+  created_at: string;
+  bank_name?: string | null;
+  account_number_masked?: string | null;
+};
+
+export type FinanceUploadResult = {
+  import: FinanceImport;
+  bank_account: {
+    id: string;
+    entity_name: string;
+    bank_name?: string | null;
+    account_number_masked: string;
+  };
+  summary: {
+    rows_seen: number;
+    rows_imported: number;
+    rows_duplicate: number;
+    rows_error: number;
+  };
+};
+
+export type FinanceClassificationRule = {
+  id: string;
+  rule_name: string;
+  match_type: string;
+  pattern: string;
+  cashflow_group: string;
+  pl_category: string;
+  pl_subcategory?: string | null;
+  counterparty_type: string;
+  counterparty_name?: string | null;
+  is_internal_transfer: boolean;
+  priority: number;
+  is_active: boolean;
+  auto_created: boolean;
+  support_count: number;
+  match_count: number;
+  correction_count: number;
+  precision_score: number;
+  last_matched_at?: string | null;
+  last_confirmed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ListResponse<T> = {
   items: T[];
   total: number;
@@ -162,6 +336,7 @@ export type ListResponse<T> = {
 
 const API_BASE = process.env.NEXT_PUBLIC_INTERNAL_API_BASE || "/api/backend";
 const TOKEN_KEY = "mac.internal.token";
+const APP_CONTEXT = "mac_internal";
 
 export function getToken() {
   if (typeof window === "undefined") return null;
@@ -176,19 +351,45 @@ export function clearToken() {
   window.localStorage.removeItem(TOKEN_KEY);
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken();
+function requestHeaders(options: RequestInit = {}) {
   const headers = new Headers(options.headers || {});
-  headers.set("content-type", "application/json");
-  headers.set("x-app-context", "mac_internal");
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+  if (!isFormData) headers.set("content-type", "application/json");
+  headers.set("x-app-context", APP_CONTEXT);
+  return headers;
+}
+
+async function refreshAccessToken() {
+  const response = await fetch(`${API_BASE}/auth/refresh`, {
+    method: "POST",
+    headers: requestHeaders(),
+    credentials: "include"
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.access_token) {
+    clearToken();
+    throw new Error("Session expired. Please sign in again.");
+  }
+  setToken(String(payload.access_token));
+  return payload as { access_token: string; token_type: string };
+}
+
+async function request<T>(path: string, options: RequestInit = {}, retryAuth = true): Promise<T> {
+  const token = getToken();
+  const headers = requestHeaders(options);
   if (token) headers.set("authorization", `Bearer ${token}`);
 
   const response = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers
+    headers,
+    credentials: "include"
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
+    if (response.status === 401 && retryAuth && path !== "/auth/login" && path !== "/auth/refresh") {
+      await refreshAccessToken();
+      return request<T>(path, options, false);
+    }
     const detail = payload?.detail || payload?.message || `Request failed ${response.status}`;
     throw new Error(String(detail));
   }
@@ -198,7 +399,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 export async function login(username: string, password: string) {
   const payload = await request<{ access_token: string; token_type: string }>("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ username, password, app: "mac_internal" })
+    body: JSON.stringify({ username, password, app: APP_CONTEXT })
   });
   setToken(payload.access_token);
   return payload;
@@ -288,4 +489,57 @@ export async function saveActionItem(payload: Partial<ActionItem>, id?: string) 
 
 export async function listAuditEvents(params = "") {
   return request<ListResponse<AuditEvent>>(`/pgvector/hr/audit-events${params}`);
+}
+
+export async function getFinanceDashboard(params = "") {
+  return request<FinanceDashboard>(`/pgvector/finance/dashboard${params}`);
+}
+
+export async function listFinanceTransactions(params = "") {
+  return request<ListResponse<FinanceTransaction>>(`/pgvector/finance/transactions${params}`);
+}
+
+export async function listFinanceImports() {
+  return request<ListResponse<FinanceImport>>("/pgvector/finance/imports");
+}
+
+export async function listFinanceRules(params = "") {
+  return request<ListResponse<FinanceClassificationRule>>(`/pgvector/finance/rules${params}`);
+}
+
+export async function updateFinanceRule(ruleId: string, payload: Partial<FinanceClassificationRule>) {
+  return request<{ item: FinanceClassificationRule }>(`/pgvector/finance/rules/${ruleId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function getFinanceCategories() {
+  return request<FinanceCategories>("/pgvector/finance/categories");
+}
+
+export async function uploadBankStatement(form: FormData) {
+  return request<FinanceUploadResult>("/pgvector/finance/bank-statements/upload", {
+    method: "POST",
+    body: form
+  });
+}
+
+export async function updateFinanceTransactionClassification(
+  transactionId: string,
+  payload: Partial<FinanceTransaction> & { save_rule?: boolean }
+) {
+  return request<{ item: FinanceTransaction }>(`/pgvector/finance/transactions/${transactionId}/classification`, {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function bulkUpdateFinanceTransactionClassification(
+  payload: Partial<FinanceTransaction> & { transaction_ids: string[]; save_rule?: boolean }
+) {
+  return request<{ items: FinanceTransaction[]; total: number }>("/pgvector/finance/transactions/classification/bulk", {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  });
 }

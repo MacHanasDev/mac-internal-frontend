@@ -25,9 +25,28 @@ function proxyHeaders(request: NextRequest) {
   const authorization = request.headers.get("authorization");
   const contentType = request.headers.get("content-type");
   const appContext = request.headers.get("x-app-context");
+  const cookie = request.headers.get("cookie");
   if (authorization) headers.set("authorization", authorization);
   if (contentType) headers.set("content-type", contentType);
   if (appContext) headers.set("x-app-context", appContext);
+  if (cookie) headers.set("cookie", cookie);
+  return headers;
+}
+
+function copyResponseHeaders(response: Response) {
+  const headers = new Headers();
+  const contentType = response.headers.get("content-type");
+  if (contentType) headers.set("content-type", contentType);
+
+  const setCookies =
+    (response.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie?.() || [];
+  if (setCookies.length) {
+    setCookies.forEach((cookie) => headers.append("set-cookie", cookie));
+  } else {
+    const setCookie = response.headers.get("set-cookie");
+    if (setCookie) headers.append("set-cookie", setCookie);
+  }
+
   return headers;
 }
 
@@ -61,14 +80,10 @@ async function proxy(request: NextRequest, context: RouteContext) {
     return backendUnavailableResponse(error);
   }
 
-  const responseHeaders = new Headers();
-  const contentType = response.headers.get("content-type");
-  if (contentType) responseHeaders.set("content-type", contentType);
-
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
-    headers: responseHeaders
+    headers: copyResponseHeaders(response)
   });
 }
 

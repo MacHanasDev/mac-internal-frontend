@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import {
   BarChart3,
   ClipboardList,
+  Landmark,
   FileClock,
   LogOut,
   ShieldCheck,
@@ -14,7 +15,7 @@ import { clearToken, type UserProfile } from "@/lib/api";
 type InternalShellProps = {
   children: ReactNode;
   user: UserProfile;
-  active: "hr" | "org" | "policies" | "reports";
+  active: "hr" | "finance" | "org" | "policies" | "reports";
 };
 
 export default function InternalShell({ children, user, active }: InternalShellProps) {
@@ -23,7 +24,10 @@ export default function InternalShell({ children, user, active }: InternalShellP
     window.location.href = "/login";
   }
 
-  const role = String(user.role || "").toUpperCase().replace(/-/g, "_").trim();
+  const normalizeRole = (roleValue?: string | null) => String(roleValue || "").toUpperCase().replace(/-/g, "_").trim();
+  const role = normalizeRole(user.role);
+  const roles = [role, ...(user.roles || []).map(normalizeRole)].filter(Boolean);
+  const isSuperAdmin = roles.includes("SUPERADMIN");
 
   return (
     <div className="app-shell">
@@ -42,6 +46,17 @@ export default function InternalShell({ children, user, active }: InternalShellP
               <Users size={18} />
               <span>HR Workspace</span>
             </a>
+            {isSuperAdmin ? (
+              <a className={`nav-link ${active === "finance" ? "active" : ""}`} href="/finance">
+                <Landmark size={18} />
+                <span>Financial Cockpit</span>
+              </a>
+            ) : (
+              <button className="nav-link disabled" type="button">
+                <Landmark size={18} />
+                <span>Financial Cockpit</span>
+              </button>
+            )}
             <button className="nav-link disabled" type="button">
               <ClipboardList size={18} />
               <span>Org Actions</span>
