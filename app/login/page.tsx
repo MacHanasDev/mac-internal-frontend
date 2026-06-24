@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowRight, LockKeyhole } from "lucide-react";
 import { getProfile, getToken, login, type UserProfile } from "@/lib/api";
@@ -48,6 +49,21 @@ export default function LoginPage() {
   return (
     <main className="auth-page">
       <section className="auth-panel">
+        <div className="auth-panel-visual">
+          <Image
+            src="/images/internal-ops-desk.png"
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 900px) 100vw, 42vw"
+          />
+          <div className="auth-visual-badges" aria-hidden="true">
+            <span>HR</span>
+            <span>Finance</span>
+            <span>Payroll</span>
+          </div>
+        </div>
+
         <form className="auth-card" onSubmit={submit}>
           <div className="brand">
             <div className="brand-mark">MI</div>
@@ -94,7 +110,15 @@ export default function LoginPage() {
       </section>
 
       <section className="auth-art">
-        <div>
+        <Image
+          src="/images/finance-cockpit.png"
+          alt=""
+          fill
+          priority
+          sizes="(max-width: 900px) 100vw, 58vw"
+          className="auth-art-image"
+        />
+        <div className="auth-art-content">
           <LockKeyhole size={42} />
           <h1 style={{ maxWidth: 620, marginTop: 18 }}>
             Internal tools for people, payroll, and operations.
